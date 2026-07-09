@@ -1,0 +1,111 @@
+:root {
+  --color-bg: #ffffff;
+  --color-surface: #f4f5f7;
+  --color-surface-2: #ffffff;
+  --color-border: #e4e5e8;
+  --color-text: #0a0a0a;
+  --color-text-muted: #6b6b6b;
+  --color-primary: #0a0a0a;
+  --color-primary-text: #ffffff;
+  --color-secondary: #ffffff;
+  --color-secondary-text: #0a0a0a;
+  --color-secondary-border: #d8d9dc;
+  --color-accent: #0a84ff;
+  --color-sidebar: #ececef;
+  --color-token-dynamic-bg: #cfe6ff;
+  --color-token-dynamic-text: #0b4c8c;
+  --color-token-static-bg: #e7e7ea;
+  --color-token-static-text: #3a3a3f;
+  --color-shadow: 0 4px 24px rgba(10, 10, 10, 0.06);
+  --color-shadow-strong: 0 6px 30px rgba(10, 10, 10, 0.10);
+  --color-overlay: rgba(0, 0, 0, 0.35);
+  --color-success: #2eaf6b;
+  --color-progress-track: #e4e5e8;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter',
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-med: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 420ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+[data-theme='dark'] {
+  --color-bg: #0d0d0f;
+  --color-surface: #18181b;
+  --color-surface-2: #1f1f23;
+  --color-border: #2a2a2f;
+  --color-text: #f5f5f7;
+  --color-text-muted: #9a9aa3;
+  --color-primary: #f5f5f7;
+  --color-primary-text: #0a0a0a;
+  --color-secondary: #1f1f23;
+  --color-secondary-text: #f5f5f7;
+  --color-secondary-border: #2a2a2f;
+  --color-accent: #0a84ff;
+  --color-sidebar: #151517;
+  --color-token-dynamic-bg: #234a6e;
+  --color-token-dynamic-text: #cde5ff;
+  --color-token-static-bg: #2c2c31;
+  --color-token-static-text: #d8d8dc;
+  --color-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  --color-shadow-strong: 0 6px 30px rgba(0, 0, 0, 0.6);
+  --color-overlay: rgba(0, 0, 0, 0.65);
+  --color-progress-track: #2a2a2f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background var(--transition-med), color var(--transition-med);
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+input {
+  font-family: inherit;
+  color: inherit;
+}
