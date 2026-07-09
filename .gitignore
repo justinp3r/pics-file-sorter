@@ -3,3 +3,5 @@ dist
 .DS_Store
 *.local
 .vite
+tsconfig.tsbuildinfo
+.claude/settings.local.json

@@ -18,6 +18,53 @@ interface Props {
 
 type Pane = 'general' | 'appearance' | 'info';
 
+/** Static per-pane sidebar metadata — hoisted so it isn't rebuilt each render. */
+const PANE_DEFS: {
+  id: Pane;
+  labelKey: 'settings.general' | 'settings.appearance' | 'settings.info';
+  tint: string;
+  icon: JSX.Element;
+}[] = [
+  {
+    id: 'general',
+    labelKey: 'settings.general',
+    tint: '#8e8e93',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <line x1="4" y1="7" x2="20" y2="7" />
+        <line x1="4" y1="12" x2="20" y2="12" />
+        <line x1="4" y1="17" x2="20" y2="17" />
+        <circle cx="9" cy="7" r="2" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
+        <circle cx="7" cy="17" r="2" fill="currentColor" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    id: 'appearance',
+    labelKey: 'settings.appearance',
+    tint: '#0a84ff',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2a10 10 0 1 0 0 20V2z" />
+        <path d="M12 2a10 10 0 0 1 0 20V2z" fill="none" stroke="currentColor" strokeWidth="2" />
+      </svg>
+    ),
+  },
+  {
+    id: 'info',
+    labelKey: 'settings.info',
+    tint: '#64748b',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+        <circle cx="12" cy="12" r="9" />
+        <line x1="12" y1="11" x2="12" y2="16" />
+        <circle cx="12" cy="8" r="0.5" fill="currentColor" />
+      </svg>
+    ),
+  },
+];
+
 export default function SettingsDialog({ settings, onClose, onApply }: Props) {
   const { t } = useI18n();
   const [pane, setPane] = useState<Pane>('general');
@@ -33,48 +80,6 @@ export default function SettingsDialog({ settings, onClose, onApply }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-
-  const panes: { id: Pane; label: string; icon: JSX.Element; tint: string }[] =
-    [
-      {
-        id: 'general',
-        label: t('settings.general'),
-        tint: '#8e8e93',
-        icon: (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="4" y1="7" x2="20" y2="7" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <line x1="4" y1="17" x2="20" y2="17" />
-            <circle cx="9" cy="7" r="2" fill="currentColor" stroke="none" />
-            <circle cx="15" cy="12" r="2" fill="currentColor" stroke="none" />
-            <circle cx="7" cy="17" r="2" fill="currentColor" stroke="none" />
-          </svg>
-        ),
-      },
-      {
-        id: 'appearance',
-        label: t('settings.appearance'),
-        tint: '#0a84ff',
-        icon: (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2a10 10 0 1 0 0 20V2z" />
-            <path d="M12 2a10 10 0 0 1 0 20V2z" fill="none" stroke="currentColor" strokeWidth="2" />
-          </svg>
-        ),
-      },
-      {
-        id: 'info',
-        label: t('settings.info'),
-        tint: '#64748b',
-        icon: (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-            <circle cx="12" cy="12" r="9" />
-            <line x1="12" y1="11" x2="12" y2="16" />
-            <circle cx="12" cy="8" r="0.5" fill="currentColor" />
-          </svg>
-        ),
-      },
-    ];
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -101,7 +106,7 @@ export default function SettingsDialog({ settings, onClose, onApply }: Props) {
 
         <div className="settings-main">
           <nav className="settings-sidebar">
-            {panes.map((p) => (
+            {PANE_DEFS.map((p) => (
               <button
                 key={p.id}
                 className={'side-item' + (pane === p.id ? ' is-active' : '')}
@@ -110,7 +115,7 @@ export default function SettingsDialog({ settings, onClose, onApply }: Props) {
                 <span className="side-icon" style={{ background: p.tint }}>
                   {p.icon}
                 </span>
-                {p.label}
+                {t(p.labelKey)}
               </button>
             ))}
           </nav>
