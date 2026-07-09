@@ -8,6 +8,7 @@ import {
   isVideo,
 } from './fileTypes';
 import { dateFromFields, parseFilename } from './syntax';
+import { runWithConcurrency } from './concurrency';
 
 interface PickDirectoryOptions {
   mode?: 'read' | 'readwrite';
@@ -82,9 +83,40 @@ export async function ensurePermission(
 }
 
 /**
- * Recursively scan a directory for media files. Subdirectories are walked in
- * parallel, and file metadata (`getFile()`) is only fetched when the date
- * cannot be derived from the filename — this keeps SD card scans fast.
+ * Build a MediaFile from a directory entry, or null for non-media files.
+ * `getFile()` (slow on SD cards) is only called when the date cannot be
+ * derived from the filename.
+ */
+async function toMediaFile(
+  handle: FileSystemFileHandle,
+  name: string,
+  syntaxTokens: SyntaxToken[]
+): Promise<MediaFile | null> {
+  const ext = getExtension(name);
+  if (!isMedia(ext)) return null;
+
+  const parsed = parseFilename(name, syntaxTokens);
+  let date = parsed ? dateFromFields(parsed) : null;
+  if (!date) {
+    const file = await handle.getFile();
+    date = new Date(file.lastModified);
+  }
+
+  return {
+    handle,
+    name,
+    extension: ext,
+    baseName: getBaseName(name),
+    date,
+    isImage: isImage(ext),
+    isVideo: isVideo(ext),
+    isRaw: isRaw(ext),
+  };
+}
+
+/**
+ * Recursively scan a directory for media files.
+ * Subdirectories are walked in parallel to keep SD card scans fast.
  */
 export async function scanDirectory(
   dir: FileSystemDirectoryHandle,
@@ -92,7 +124,6 @@ export async function scanDirectory(
   onProgress?: (count: number) => void
 ): Promise<MediaFile[]> {
   const out: MediaFile[] = [];
-  let count = 0;
 
   async function walk(d: FileSystemDirectoryHandle): Promise<void> {
     const subdirs: FileSystemDirectoryHandle[] = [];
@@ -101,34 +132,21 @@ export async function scanDirectory(
         subdirs.push(entry as FileSystemDirectoryHandle);
         continue;
       }
-      const ext = getExtension(entry.name);
-      if (!isMedia(ext)) continue;
+      const media = await toMediaFile(
+        entry as FileSystemFileHandle,
+        entry.name,
+        syntaxTokens
+      );
+      if (!media) continue;
 
-      const fileHandle = entry as FileSystemFileHandle;
-      const parsed = parseFilename(entry.name, syntaxTokens);
-      let date = parsed ? dateFromFields(parsed) : null;
-      if (!date) {
-        const file = await fileHandle.getFile();
-        date = new Date(file.lastModified);
-      }
-      out.push({
-        handle: fileHandle,
-        name: entry.name,
-        extension: ext,
-        baseName: getBaseName(entry.name),
-        date,
-        isImage: isImage(ext),
-        isVideo: isVideo(ext),
-        isRaw: isRaw(ext),
-      });
-      count++;
-      if (count % 25 === 0) onProgress?.(count);
+      out.push(media);
+      if (out.length % 25 === 0) onProgress?.(out.length);
     }
     await Promise.all(subdirs.map(walk));
   }
 
   await walk(dir);
-  onProgress?.(count);
+  onProgress?.(out.length);
   return out;
 }
 
@@ -172,6 +190,54 @@ export interface SceneBatch {
 
 const COPY_CONCURRENCY = 3;
 
+interface CopyTask {
+  dir: FileSystemDirectoryHandle;
+  file: MediaFile;
+}
+
+/** Create the Year/Month/Scene directory for a batch and return its handle. */
+async function createSceneDirectory(
+  target: FileSystemDirectoryHandle,
+  batch: SceneBatch,
+  language: string
+): Promise<FileSystemDirectoryHandle> {
+  const yearDir = await target.getDirectoryHandle(yearFolderName(batch.date), {
+    create: true,
+  });
+  const monthDir = await yearDir.getDirectoryHandle(
+    monthFolderName(batch.date, language),
+    { create: true }
+  );
+  return monthDir.getDirectoryHandle(sanitizeName(batch.description), {
+    create: true,
+  });
+}
+
+async function collectCopyTasks(
+  target: FileSystemDirectoryHandle,
+  batches: SceneBatch[],
+  language: string
+): Promise<CopyTask[]> {
+  const tasks: CopyTask[] = [];
+  for (const batch of batches) {
+    const sceneDir = await createSceneDirectory(target, batch, language);
+    for (const file of batch.files) {
+      tasks.push({ dir: sceneDir, file });
+    }
+  }
+  return tasks;
+}
+
+async function copyFileInto(
+  dir: FileSystemDirectoryHandle,
+  file: MediaFile
+): Promise<void> {
+  const source = await file.handle.getFile();
+  const destHandle = await dir.getFileHandle(file.name, { create: true });
+  const writable = await destHandle.createWritable();
+  await source.stream().pipeTo(writable);
+}
+
 /**
  * Create the Year/Month/Scene structure in the target directory and copy all
  * batch files into it. Files are copied with limited concurrency, which is
@@ -183,57 +249,20 @@ export async function buildFileStructure(
   language: string,
   onProgress?: (p: BuildProgress) => void
 ): Promise<void> {
-  interface CopyTask {
-    dir: FileSystemDirectoryHandle;
-    file: MediaFile;
-  }
-
-  const tasks: CopyTask[] = [];
-  for (const batch of batches) {
-    const sceneName = sanitizeName(batch.description);
-    const yearDir = await target.getDirectoryHandle(
-      yearFolderName(batch.date),
-      { create: true }
-    );
-    const monthDir = await yearDir.getDirectoryHandle(
-      monthFolderName(batch.date, language),
-      { create: true }
-    );
-    const sceneDir = await monthDir.getDirectoryHandle(sceneName, {
-      create: true,
-    });
-    for (const file of batch.files) {
-      tasks.push({ dir: sceneDir, file });
-    }
-  }
-
+  const tasks = await collectCopyTasks(target, batches, language);
   const total = tasks.length;
   let done = 0;
-  let nextIndex = 0;
   onProgress?.({ done, total });
 
-  async function worker(): Promise<void> {
-    for (;;) {
-      const i = nextIndex++;
-      if (i >= total) return;
-      const { dir, file } = tasks[i];
-      try {
-        const source = await file.handle.getFile();
-        const destHandle = await dir.getFileHandle(file.name, { create: true });
-        const writable = await destHandle.createWritable();
-        await source.stream().pipeTo(writable);
-      } catch (err) {
-        console.error('Copy failed for', file.name, err);
-      }
-      done++;
-      onProgress?.({ done, total, currentFile: file.name });
+  await runWithConcurrency(tasks, COPY_CONCURRENCY, async ({ dir, file }) => {
+    try {
+      await copyFileInto(dir, file);
+    } catch (err) {
+      console.error('Copy failed for', file.name, err);
     }
-  }
+    done++;
+    onProgress?.({ done, total, currentFile: file.name });
+  });
 
-  const workers = Array.from(
-    { length: Math.max(1, Math.min(COPY_CONCURRENCY, total)) },
-    () => worker()
-  );
-  await Promise.all(workers);
   onProgress?.({ done: total, total });
 }

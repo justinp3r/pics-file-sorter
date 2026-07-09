@@ -74,57 +74,79 @@ export function parseFilename(
   filename: string,
   tokens: SyntaxToken[]
 ): ParsedFields | null {
-  let cursor = 0;
   const fields: ParsedFields = {};
+  let cursor = 0;
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
-    const next = tokens[i + 1];
 
     if (token.type === 'static') {
-      const slice = filename.substring(cursor, cursor + token.value.length);
-      if (slice.toLowerCase() !== token.value.toLowerCase()) {
-        return null;
-      }
+      if (!matchesStatic(filename, cursor, token.value)) return null;
       cursor += token.value.length;
       continue;
     }
 
-    const len = fixedLength(token.type);
-
-    let raw: string;
-    if (token.type === 'Fileending') {
-      // Take from the last dot onwards
-      const dotIndex = filename.lastIndexOf('.');
-      if (dotIndex < cursor) return null;
-      raw = filename.substring(dotIndex);
-      cursor = filename.length;
-    } else if (len !== null) {
-      raw = filename.substring(cursor, cursor + len);
-      cursor += len;
-    } else {
-      // Variable length: read until next static or end
-      const nextStatic = findNextStatic(tokens, i + 1);
-      if (nextStatic) {
-        const idx = filename.indexOf(nextStatic, cursor);
-        if (idx < 0) return null;
-        raw = filename.substring(cursor, idx);
-        cursor = idx;
-      } else if (next && next.type === 'Fileending') {
-        const dotIndex = filename.lastIndexOf('.');
-        if (dotIndex < cursor) return null;
-        raw = filename.substring(cursor, dotIndex);
-        cursor = dotIndex;
-      } else {
-        raw = filename.substring(cursor);
-        cursor = filename.length;
-      }
-    }
-
-    if (!assignField(token.type, raw, fields)) return null;
+    const read = readTokenValue(filename, cursor, tokens, i);
+    if (!read) return null;
+    if (!assignField(token.type, read.value, fields)) return null;
+    cursor = read.nextCursor;
   }
 
   return fields;
+}
+
+function matchesStatic(
+  filename: string,
+  cursor: number,
+  value: string
+): boolean {
+  const slice = filename.substring(cursor, cursor + value.length);
+  return slice.toLowerCase() === value.toLowerCase();
+}
+
+interface TokenRead {
+  value: string;
+  nextCursor: number;
+}
+
+/** Read the raw string a dynamic token covers, starting at `cursor`. */
+function readTokenValue(
+  filename: string,
+  cursor: number,
+  tokens: SyntaxToken[],
+  index: number
+): TokenRead | null {
+  const token = tokens[index];
+
+  if (token.type === 'Fileending') {
+    const dotIndex = filename.lastIndexOf('.');
+    if (dotIndex < cursor) return null;
+    return { value: filename.substring(dotIndex), nextCursor: filename.length };
+  }
+
+  const len = fixedLength(token.type);
+  if (len !== null) {
+    return {
+      value: filename.substring(cursor, cursor + len),
+      nextCursor: cursor + len,
+    };
+  }
+
+  // Variable length: read until the next static token, the file extension, or the end.
+  const nextStatic = findNextStatic(tokens, index + 1);
+  if (nextStatic) {
+    const idx = filename.indexOf(nextStatic, cursor);
+    if (idx < 0) return null;
+    return { value: filename.substring(cursor, idx), nextCursor: idx };
+  }
+
+  if (tokens[index + 1]?.type === 'Fileending') {
+    const dotIndex = filename.lastIndexOf('.');
+    if (dotIndex < cursor) return null;
+    return { value: filename.substring(cursor, dotIndex), nextCursor: dotIndex };
+  }
+
+  return { value: filename.substring(cursor), nextCursor: filename.length };
 }
 
 function fixedLength(type: SyntaxTokenType): number | null {

@@ -10,21 +10,42 @@ interface Props {
   onFinish: () => void;
 }
 
+interface RangeFormatters {
+  date: Intl.DateTimeFormat;
+  time: Intl.DateTimeFormat;
+}
+
+const formatterCache = new Map<string, RangeFormatters>();
+
+function getFormatters(locale: string): RangeFormatters {
+  let formatters = formatterCache.get(locale);
+  if (!formatters) {
+    formatters = {
+      date: new Intl.DateTimeFormat(locale, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }),
+      time: new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    };
+    formatterCache.set(locale, formatters);
+  }
+  return formatters;
+}
+
 function formatDateRange(start: Date, end: Date, locale: string): string {
+  const { date, time } = getFormatters(locale);
   const sameDay =
     start.getFullYear() === end.getFullYear() &&
     start.getMonth() === end.getMonth() &&
     start.getDate() === end.getDate();
-  const fmt = (d: Date) =>
-    d.toLocaleDateString(locale, {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  const time = (d: Date) =>
-    d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-  if (sameDay) return `${fmt(start)} · ${time(start)} – ${time(end)}`;
-  return `${fmt(start)} – ${fmt(end)}`;
+  if (sameDay) {
+    return `${date.format(start)} · ${time.format(start)} – ${time.format(end)}`;
+  }
+  return `${date.format(start)} – ${date.format(end)}`;
 }
 
 export default function SceneryView({

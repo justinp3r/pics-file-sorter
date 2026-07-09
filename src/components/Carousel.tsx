@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { CarouselItem } from '../lib/batching';
 import { getPreview, type Preview } from '../lib/preview';
 import { useI18n } from '../i18n';
@@ -10,36 +10,42 @@ interface Props {
 const VISIBLE_RANGE = 2;
 const WHEEL_LOCK_MS = 180;
 
-export default function Carousel({ items }: Props) {
+type PreviewMap = Record<string, Preview | null>;
+
+function Carousel({ items }: Props) {
   const { t } = useI18n();
   const [activeIdx, setActiveIdx] = useState(0);
-  const [previews, setPreviews] = useState<Record<string, Preview | null>>({});
+  const [previews, setPreviews] = useState<PreviewMap>({});
+  const requestedRef = useRef<Set<string>>(new Set());
   const wheelLockRef = useRef(0);
 
-  useEffect(() => setActiveIdx(0), [items]);
+  useEffect(() => {
+    requestedRef.current = new Set();
+    setPreviews({});
+    setActiveIdx(0);
+  }, [items]);
 
-  // Load previews for the visible window (cache makes repeats instant).
+  // Load previews for the visible window. Tracking requests in a ref keeps
+  // this effect from re-running every time a preview resolves.
   useEffect(() => {
     let cancelled = false;
     for (let off = -VISIBLE_RANGE; off <= VISIBLE_RANGE; off++) {
       const idx = activeIdx + off;
       if (idx < 0 || idx >= items.length) continue;
       const item = items[idx];
-      if (previews[item.key] !== undefined) continue;
+      if (requestedRef.current.has(item.key)) continue;
+      requestedRef.current.add(item.key);
       getPreview(item.representative).then((p) => {
-        if (cancelled) return;
-        setPreviews((prev) =>
-          prev[item.key] !== undefined ? prev : { ...prev, [item.key]: p }
-        );
+        if (!cancelled) setPreviews((prev) => ({ ...prev, [item.key]: p }));
       });
     }
     return () => {
       cancelled = true;
     };
-  }, [activeIdx, items, previews]);
+  }, [activeIdx, items]);
 
-  // Prefetch the rest of the batch in the background while the UI is idle,
-  // so swiping through the carousel never waits on thumbnail generation.
+  // Prefetch the rest of the batch while the UI is idle, so swiping through
+  // the carousel never waits on thumbnail generation.
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
@@ -68,6 +74,8 @@ export default function Carousel({ items }: Props) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [items.length]);
+
+  const onSelect = useCallback((idx: number) => setActiveIdx(idx), []);
 
   if (items.length === 0) {
     return <div className="carousel-empty">{t('scenery.emptyBatch')}</div>;
@@ -100,61 +108,16 @@ export default function Carousel({ items }: Props) {
       <div className="carousel-strip" onWheel={onWheel} role="region">
         {items.map((item, idx) => {
           const offset = idx - activeIdx;
-          const abs = Math.abs(offset);
-          if (abs > VISIBLE_RANGE + 1) return null;
-          const preview = previews[item.key];
-          const isVideo = item.representative.isVideo;
+          if (Math.abs(offset) > VISIBLE_RANGE + 1) return null;
           return (
-            <div
+            <CarouselCard
               key={item.key}
-              className={'carousel-card' + (offset === 0 ? ' is-active' : '')}
-              style={
-                {
-                  '--offset': offset,
-                  '--abs-offset': abs,
-                  zIndex: 10 - abs,
-                } as React.CSSProperties
-              }
-              onClick={() => setActiveIdx(idx)}
-            >
-              <div className="carousel-card-inner">
-                {preview ? (
-                  <img
-                    src={preview.url}
-                    alt={item.representative.name}
-                    draggable={false}
-                    decoding="async"
-                  />
-                ) : (
-                  <div className="carousel-card-fallback">
-                    {preview === undefined ? (
-                      <div className="spinner-small" />
-                    ) : (
-                      <span>
-                        {item.representative.extension
-                          .toUpperCase()
-                          .replace('.', '')}
-                      </span>
-                    )}
-                  </div>
-                )}
-                {isVideo && (
-                  <div
-                    className={
-                      'video-play-badge ' +
-                      (preview && preview.cornerLuminance > 0.6
-                        ? 'dark'
-                        : 'light')
-                    }
-                    aria-hidden
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="7 4 20 12 7 20" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
+              item={item}
+              index={idx}
+              offset={offset}
+              preview={previews[item.key]}
+              onSelect={onSelect}
+            />
           );
         })}
       </div>
@@ -172,3 +135,76 @@ export default function Carousel({ items }: Props) {
     </div>
   );
 }
+
+interface CardProps {
+  item: CarouselItem;
+  index: number;
+  offset: number;
+  preview: Preview | null | undefined;
+  onSelect: (index: number) => void;
+}
+
+/** One card in the 3D strip. Memoized so preview updates and description
+ *  typing don't re-render untouched cards. */
+const CarouselCard = memo(function CarouselCard({
+  item,
+  index,
+  offset,
+  preview,
+  onSelect,
+}: CardProps) {
+  const abs = Math.abs(offset);
+  const isVideo = item.representative.isVideo;
+
+  return (
+    <div
+      className={'carousel-card' + (offset === 0 ? ' is-active' : '')}
+      style={
+        {
+          '--offset': offset,
+          '--abs-offset': abs,
+          zIndex: 10 - abs,
+        } as React.CSSProperties
+      }
+      onClick={() => onSelect(index)}
+    >
+      <div className="carousel-card-inner">
+        {preview ? (
+          <img
+            src={preview.url}
+            alt={item.representative.name}
+            draggable={false}
+            decoding="async"
+          />
+        ) : (
+          <div className="carousel-card-fallback">
+            {preview === undefined ? (
+              <div className="spinner-small" />
+            ) : (
+              <span>
+                {item.representative.extension.toUpperCase().replace('.', '')}
+              </span>
+            )}
+          </div>
+        )}
+        {isVideo && (
+          <div
+            className={
+              'video-play-badge ' +
+              (preview && preview.cornerLuminance > 0.6 ? 'dark' : 'light')
+            }
+            aria-hidden
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="7 4 20 12 7 20" />
+            </svg>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
+/** Memoized: typing in the scenery description re-renders SceneryView but
+ *  leaves the carousel subtree untouched (its `items` prop is stable). */
+export default memo(Carousel);
