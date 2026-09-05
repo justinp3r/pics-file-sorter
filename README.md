@@ -11,15 +11,15 @@ The app guides you through four steps:
 3. Group recordings into "scenes" and name them
 4. Copy files into a `Year/Month/Scene` structure
 
-## Screenshots (deployed app, macOS-style UI)
+## Screenshots (from rawsbyjustin/public)
 
-### Light theme
+The screenshots below are loaded from the `justinp3r/rawsbyjustin` repository `public` folder.
 
-![Pics File Sorter - light theme](assets/screenshots/app-home-macos-ui.png)
+![Screenshot 1](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/screenshot1.png)
 
-### Dark theme
+![Screenshot 2](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/screenshot2.png)
 
-![Pics File Sorter - dark theme](assets/screenshots/app-home-dark-macos-ui.png)
+![Screenshot 3](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/screenshot3.png)
 
 ## Key features
 
