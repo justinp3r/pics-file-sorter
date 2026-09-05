@@ -11,15 +11,15 @@ The app guides you through four steps:
 3. Group recordings into "scenes" and name them
 4. Copy files into a `Year/Month/Scene` structure
 
-## Screenshots (simulated example media)
+## Screenshots (Analyze flow with media loaded)
 
-### Analyze overview (images + videos detected)
+### Analyze result overview
 
-![Pics File Sorter - analyze overview with media](assets/screenshots/app-analyze-overview-simulated.png)
+![Pics File Sorter - analyze result overview](assets/screenshots/app-analyze-overview-real.png)
 
-### Scenery review after Analyze
+### Browsing media after Analyze
 
-![Pics File Sorter - scenery review with image and video preview](assets/screenshots/app-scenery-review-simulated.png)
+![Pics File Sorter - carousel browsing after analyze](assets/screenshots/app-analyze-carousel-real.png)
 
 ## Key features
 
