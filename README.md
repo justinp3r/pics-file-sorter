@@ -11,19 +11,19 @@ The app guides you through four steps:
 3. Group recordings into "scenes" and name them
 4. Copy files into a `Year/Month/Scene` structure
 
-## Screenshots (from rawsbyjustin/public/optimized)
+## Screenshots
 
-The screenshots below use images from `justinp3r/rawsbyjustin/public/optimized` (based on your second screenshot selection).
+The screenshots below use images from `justinp3r/rawsbyjustin`.
 
-![Screenshot 1](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/optimized/IMG_4627-min.jpg)
+![Screenshot 1](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/optimized/IMG_4871.jpg)
 
-![Screenshot 2](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/optimized/IMG_4631-min.jpg)
+![Screenshot 2](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/images/IMG_9992-min.jpg)
 
-![Screenshot 3](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/optimized/IMG_4634-min.jpg)
+![Screenshot 3](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/images/IMG_4623-min.jpg)
 
-![Screenshot 4](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/optimized/IMG_4651-min.jpg)
+![Screenshot 4](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/images/IMG_4634.jpg)
 
-![Screenshot 5](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/optimized/IMG_4666-min.jpg)
+![Screenshot 5](https://raw.githubusercontent.com/justinp3r/rawsbyjustin/main/public/optimized/IMG_4651.jpg)
 
 ## Key features
 
