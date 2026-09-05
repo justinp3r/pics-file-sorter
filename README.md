@@ -11,15 +11,15 @@ The app guides you through four steps:
 3. Group recordings into "scenes" and name them
 4. Copy files into a `Year/Month/Scene` structure
 
-## Screenshots (deployed app, macOS-style UI)
+## Screenshots (simulated example media)
 
-### Light theme
+### Analyze overview (images + videos detected)
 
-![Pics File Sorter - light theme](assets/screenshots/app-home-macos-ui.png)
+![Pics File Sorter - analyze overview with media](assets/screenshots/app-analyze-overview-simulated.png)
 
-### Dark theme
+### Scenery review after Analyze
 
-![Pics File Sorter - dark theme](assets/screenshots/app-home-dark-macos-ui.png)
+![Pics File Sorter - scenery review with image and video preview](assets/screenshots/app-scenery-review-simulated.png)
 
 ## Key features
 
