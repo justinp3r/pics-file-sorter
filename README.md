@@ -1,29 +1,39 @@
 # Pics File Sorter
 
-Pics File Sorter ist eine lokale Web-App, mit der du Foto- und Videodateien aus einem Quellordner in eine saubere Ordnerstruktur im Zielordner sortierst.
+Pics File Sorter is a local web app that helps you sort photo and video files from a source folder into a clean target folder structure.
 
-## Was das Projekt macht
+## What this project does
 
-Die App führt dich in vier Schritten durch den Import:
+The app guides you through four steps:
 
-1. Quell- und Zielordner auswählen (über die File System Access API im Browser)
-2. Medien im Quellordner rekursiv analysieren
-3. Aufnahmeserien als „Szenen“ gruppieren und benennen
-4. Dateien in eine Struktur `Jahr/Monat/Szene` kopieren
+1. Select source and target folders (via the browser File System Access API)
+2. Recursively scan media files in the source folder
+3. Group recordings into "scenes" and name them
+4. Copy files into a `Year/Month/Scene` structure
 
-## Wichtige Funktionen
+## Screenshots (deployed app, macOS-style UI)
 
-- Unterstützt Bilder, Videos und RAW-Dateien
-- Batch-Bildung nach Zeitabstand (1 Minute, 10 Minuten, 1 Tag oder benutzerdefiniert)
-- Anpassbare Dateinamens-Syntax zum Auslesen von Datum/Uhrzeit aus Dateinamen
-- Fallback auf Dateisystem-Zeitstempel, wenn aus dem Dateinamen kein Datum extrahiert werden kann
-- Mehrsprachige Oberfläche (Deutsch, Englisch, Italienisch, Französisch, Spanisch)
-- Theme-Auswahl (System, Hell, Dunkel)
-- Lokale Speicherung der Einstellungen im Browser
+### Light theme
 
-## Unterstützte Browser
+![Pics File Sorter - light theme](assets/screenshots/app-home-macos-ui.png)
 
-Die App benötigt die **File System Access API**. Praktisch bedeutet das:
+### Dark theme
+
+![Pics File Sorter - dark theme](assets/screenshots/app-home-dark-macos-ui.png)
+
+## Key features
+
+- Supports images, videos, and RAW files
+- Batch grouping by time gap (1 minute, 10 minutes, 1 day, or custom)
+- Customizable filename token syntax to extract date/time from filenames
+- Fallback to filesystem timestamps if no date can be extracted from a filename
+- Multilingual UI (German, English, Italian, French, Spanish)
+- Theme selection (System, Light, Dark)
+- Local settings persistence in the browser
+
+## Supported browsers
+
+The app requires the **File System Access API**. In practice, this means:
 
 - Chrome
 - Edge
@@ -35,32 +45,32 @@ Die App benötigt die **File System Access API**. Praktisch bedeutet das:
 npm install
 ```
 
-## Entwicklung starten
+## Start development
 
 ```bash
 npm run dev
 ```
 
-## Build erstellen
+## Build
 
 ```bash
 npm run build
 ```
 
-## Tests ausführen
+## Run tests
 
 ```bash
 npm run test
 ```
 
-## Tech-Stack
+## Tech stack
 
 - React 18
 - TypeScript
 - Vite
 - Vitest
 
-## Hinweise
+## Notes
 
-- Die App arbeitet lokal im Browser und nutzt vom Nutzer ausgewählte Verzeichnisse.
-- Es gibt kein Backend im Repository.
+- The app runs locally in the browser and works only with user-selected directories.
+- There is no backend in this repository.
